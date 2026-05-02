@@ -29,21 +29,33 @@
 <body>
   <!-- Navbar -->
 <!-- Navbar (ใส่แทนของเดิมใน manual.html) -->
-<nav class="navbar navbar-expand-lg navbar-dark" style="background:#151823">
+<nav class="navbar navbar-expand-lg navbar-dark sticky-top" style="background:#151823">
   <div class="container-fluid">
-    <a class="navbar-brand fw-semibold" href="manual.html">Manual</a>
+    <a class="navbar-brand fw-semibold" href="index.html">🛠️ Tools Dashboard</a>
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navMain">
       <span class="navbar-toggler-icon"></span>
     </button>
     <div id="navMain" class="collapse navbar-collapse">
       <ul class="navbar-nav me-auto">
-        <li class="nav-item"><a class="nav-link active" href="manual.html">curl</a></li>
-        <li class="nav-item"><a class="nav-link" href="bash.html">Bash</a></li>
- <li class="nav-item"><a class="nav-link" href="nvim.html">Neovim</a></li>
-
-        <li class="nav-item"><a class="nav-link disabled" aria-disabled="true" href="#">(เร็วๆ นี้) manuals อื่น</a></li>
+        <li class="nav-item"><a class="nav-link" href="index.html">Home</a></li>
+        <li class="nav-item dropdown">
+          <a class="nav-link dropdown-toggle active" href="#" role="button" data-bs-toggle="dropdown">Manuals</a>
+          <ul class="dropdown-menu dropdown-menu-dark">
+            <li><a class="dropdown-item" href="bash.html">Bash Cheatsheet</a></li>
+            <li><a class="dropdown-item" href="nvim.html">Neovim Cheatsheet</a></li>
+            <li><a class="dropdown-item active" href="manual.html">cURL Builder</a></li>
+          </ul>
+        </li>
+        <li class="nav-item dropdown">
+          <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">Web Tools</a>
+          <ul class="dropdown-menu dropdown-menu-dark">
+            <li><a class="dropdown-item" href="qr.html">QR Generator</a></li>
+            <li><a class="dropdown-item" href="converter.html">Image Converter</a></li>
+            <li><a class="dropdown-item" href="graph.html">Graph Plotter</a></li>
+          </ul>
+        </li>
       </ul>
-      <span class="navbar-text text-muted">Manuals • jQuery + Bootstrap</span>
+      <span class="navbar-text text-muted">cURL Builder</span>
     </div>
   </div>
 </nav>

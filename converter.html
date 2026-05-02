@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="th" data-bs-theme="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Image Converter</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="./css/dark.css" rel="stylesheet">
+  <style>
+    .tool-container { max-width: 800px; margin: 0 auto; }
+    .drop-zone {
+      border: 2px dashed var(--border);
+      border-radius: 1rem;
+      padding: 3rem 1rem;
+      text-align: center;
+      transition: all 0.3s ease;
+      background: var(--surface-2);
+      cursor: pointer;
+    }
+    .drop-zone:hover, .drop-zone.dragover {
+      border-color: var(--accent);
+      background: #1c233a;
+    }
+    #previewImg {
+      max-width: 100%;
+      max-height: 300px;
+      border-radius: 0.5rem;
+      display: none;
+      margin: 1rem auto;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Navbar -->
+  <nav class="navbar navbar-expand-lg navbar-dark sticky-top">
+    <div class="container-fluid">
+      <a class="navbar-brand fw-semibold" href="index.html">🛠️ Tools Dashboard</a>
+      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navMain">
+        <span class="navbar-toggler-icon"></span>
+      </button>
+      <div id="navMain" class="collapse navbar-collapse">
+        <ul class="navbar-nav me-auto">
+          <li class="nav-item"><a class="nav-link" href="index.html">Home</a></li>
+          <li class="nav-item dropdown">
+            <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">Manuals</a>
+            <ul class="dropdown-menu dropdown-menu-dark">
+              <li><a class="dropdown-item" href="bash.html">Bash Cheatsheet</a></li>
+              <li><a class="dropdown-item" href="nvim.html">Neovim Cheatsheet</a></li>
+              <li><a class="dropdown-item" href="manual.html">cURL Builder</a></li>
+            </ul>
+          </li>
+          <li class="nav-item dropdown">
+            <a class="nav-link dropdown-toggle active" href="#" role="button" data-bs-toggle="dropdown">Web Tools</a>
+            <ul class="dropdown-menu dropdown-menu-dark">
+              <li><a class="dropdown-item" href="qr.html">QR Generator</a></li>
+              <li><a class="dropdown-item active" href="converter.html">Image Converter</a></li>
+              <li><a class="dropdown-item" href="graph.html">Graph Plotter</a></li>
+            </ul>
+          </li>
+        </ul>
+        <span class="navbar-text text-muted">Image Converter</span>
+      </div>
+    </div>
+  </nav>
+
+  <div class="container my-5 tool-container">
+    <div class="text-center mb-5">
+      <h2 class="fw-bold" style="color: var(--accent);">Image Converter</h2>
+      <p class="text-muted">Convert images seamlessly in your browser. No files are uploaded to any server.</p>
+    </div>
+
+    <div class="section-card">
+      <div class="row g-4">
+        <div class="col-12">
+          <div class="drop-zone" id="dropZone">
+            <h4 class="mb-2">Drag & Drop an image here</h4>
+            <p class="text-muted mb-3">or click to browse</p>
+            <input type="file" id="fileInput" accept="image/*" style="display: none;">
+            <button class="btn btn-outline-secondary" onclick="document.getElementById('fileInput').click()">Select File</button>
+          </div>
+          <div class="text-center">
+            <img id="previewImg" alt="Preview">
+            <p id="fileName" class="text-muted mt-2" style="display:none;"></p>
+          </div>
+        </div>
+
+        <div class="col-12" id="controlsSection" style="display:none; transition: all 0.3s ease;">
+          <hr class="border-secondary mb-4"/>
+          <div class="row align-items-end g-3">
+            <div class="col-md-6">
+              <label class="form-label">Convert to format:</label>
+              <select class="form-select" id="formatSelect">
+                <option value="image/png">PNG</option>
+                <option value="image/jpeg">JPG / JPEG</option>
+                <option value="image/webp">WEBP</option>
+                <option value="ico">ICO (256x256)</option>
+              </select>
+            </div>
+            <div class="col-md-6 d-grid">
+              <button id="convertBtn" class="btn btn-primary" style="background: var(--accent); border: none; color: #111;">Convert & Download</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Hidden canvas for conversion -->
+  <canvas id="canvas" style="display:none;"></canvas>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  <script>
+    const dropZone = document.getElementById('dropZone');
+    const fileInput = document.getElementById('fileInput');
+    const previewImg = document.getElementById('previewImg');
+    const fileName = document.getElementById('fileName');
+    const controlsSection = document.getElementById('controlsSection');
+    const formatSelect = document.getElementById('formatSelect');
+    const convertBtn = document.getElementById('convertBtn');
+    const canvas = document.getElementById('canvas');
+    const ctx = canvas.getContext('2d');
+
+    let currentFile = null;
+    let imgElement = new Image();
+
+    // Drag and Drop Events
+    ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+      dropZone.addEventListener(eventName, preventDefaults, false);
+    });
+    function preventDefaults(e) { e.preventDefault(); e.stopPropagation(); }
+
+    ['dragenter', 'dragover'].forEach(eventName => {
+      dropZone.addEventListener(eventName, () => dropZone.classList.add('dragover'), false);
+    });
+    ['dragleave', 'drop'].forEach(eventName => {
+      dropZone.addEventListener(eventName, () => dropZone.classList.remove('dragover'), false);
+    });
+
+    dropZone.addEventListener('drop', (e) => {
+      let dt = e.dataTransfer;
+      let files = dt.files;
+      handleFiles(files);
+    });
+
+    fileInput.addEventListener('change', function() {
+      handleFiles(this.files);
+    });
+
+    function handleFiles(files) {
+      if (files.length > 0 && files[0].type.startsWith('image/')) {
+        currentFile = files[0];
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          previewImg.src = e.target.result;
+          previewImg.style.display = 'block';
+          fileName.textContent = currentFile.name;
+          fileName.style.display = 'block';
+          controlsSection.style.display = 'block';
+          
+          imgElement.onload = () => {
+             // Ready for conversion
+          }
+          imgElement.src = e.target.result;
+        }
+        reader.readAsDataURL(currentFile);
+      } else {
+        alert("Please select a valid image file.");
+      }
+    }
+
+    convertBtn.addEventListener('click', () => {
+      if (!currentFile || !imgElement.src) return;
+
+      let targetFormat = formatSelect.value;
+      let isIco = targetFormat === 'ico';
+      let mimeType = isIco ? 'image/png' : targetFormat; // Web browser canvas doesn't natively encode to image/x-icon well
+
+      if (isIco) {
+        // ICO requires specific size in many cases, resize to 256x256
+        canvas.width = 256;
+        canvas.height = 256;
+        // White background just in case
+        ctx.fillStyle = "white";
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        ctx.drawImage(imgElement, 0, 0, 256, 256);
+      } else {
+        canvas.width = imgElement.width;
+        canvas.height = imgElement.height;
+        // For JPG, fill white background to avoid transparent becoming black
+        if (targetFormat === 'image/jpeg') {
+          ctx.fillStyle = "white";
+          ctx.fillRect(0, 0, canvas.width, canvas.height);
+        }
+        ctx.drawImage(imgElement, 0, 0);
+      }
+
+      const quality = mimeType === 'image/jpeg' || mimeType === 'image/webp' ? 0.9 : undefined;
+      const dataUrl = canvas.toDataURL(mimeType, quality);
+
+      let extension = mimeType.split('/')[1];
+      if (mimeType === 'image/jpeg') extension = 'jpg';
+      if (isIco) extension = 'ico';
+
+      let originalName = currentFile.name.split('.')[0];
+      let newFileName = originalName + '.' + extension;
+
+      const a = document.createElement('a');
+      a.href = dataUrl;
+      a.download = newFileName;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+    });
+  </script>
+</body>
+</html>
